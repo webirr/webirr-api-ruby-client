@@ -18,7 +18,7 @@ module Webirr
       {
         customerCode: @customer_code,
         customerName: @customer_name,
-        customerPhone: @customer_phone
+        customerPhone: @customer_phone,
         amount: @amount,
         description: @description,
         billReference: @bill_reference,
