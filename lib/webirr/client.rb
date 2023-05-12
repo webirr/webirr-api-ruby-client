@@ -4,12 +4,12 @@ require "faraday"
 
 module Webirr
   class Client
-    def initialize(api_key, is_test_env)
+    def initialize(domain = "api.webirr.com", api_key, is_test_env)
       @api_key = api_key
       @client =
         Faraday.new(
           url:
-            (is_test_env ? "https://api.webirr.com/" : "https://api.webirr.com:8080/").to_s,
+            (is_test_env ? "https://#{domain}/" : "https://#{domain}:8080/").to_s,
           params: {
             "api_key" => @api_key
           },
