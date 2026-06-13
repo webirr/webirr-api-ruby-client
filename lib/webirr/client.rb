@@ -4,15 +4,14 @@ require "faraday"
 
 module Webirr
   class Client
-    def initialize(domain = "api.webirr.com", api_key, is_test_env)
+    def initialize(domain = "api.webirr.com", api_key, is_test_env, merchant_id: nil)
       @api_key = api_key
+      @merchant_id = merchant_id
       @client =
         Faraday.new(
           url:
             (is_test_env ? "https://#{domain}/" : "https://#{domain}:8080/").to_s,
-          params: {
-            "api_key" => @api_key
-          },
+          params: client_params,
           headers: {
             "Content-Type" => "application/json"
           }
@@ -69,6 +68,14 @@ module Webirr
       else
         { "error" => "http error #{response.status} #{response.reason_phrase}" }
       end
+    end
+
+    private
+
+    def client_params
+      params = { "api_key" => @api_key }
+      params["merchant_id"] = @merchant_id.to_s unless @merchant_id.to_s.strip.empty?
+      params
     end
   end
 end

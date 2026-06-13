@@ -86,6 +86,23 @@ RSpec.describe Webirr::Client do
     expect(options[:url]).to eq("https://gateway.example.com/")
   end
 
+  it "adds client merchant_id as a query parameter when supplied" do
+    _client, _connection, options =
+      build_client(["api-key", true], merchant_id: "0305")
+
+    expect(options[:params]).to eq(
+      "api_key" => "api-key",
+      "merchant_id" => "0305"
+    )
+  end
+
+  it "does not add blank client merchant_id as a query parameter" do
+    _client, _connection, options =
+      build_client(["api-key", true], merchant_id: "  ")
+
+    expect(options[:params]).to eq("api_key" => "api-key")
+  end
+
   it "posts create_bill to the current legacy endpoint" do
     client, connection = build_client(["api-key", true])
 
@@ -169,14 +186,24 @@ RSpec.describe Webirr::Client do
 
   it "returns the current error hash for failed responses" do
     response = FakeWebirrResponse.new("forbidden", 403, "Forbidden", false)
-    client, _connection = build_client(["api-key", true], response)
+    client, _connection = build_client(["api-key", true], response: response)
 
     expect(client.create_bill(sample_ruby_bill)).to eq(
       "error" => "http error 403 Forbidden"
     )
   end
 
-  def build_client(client_args, response = success_response)
+  it "does not overwrite bill merchant_id from client merchant_id" do
+    client, connection = build_client(["api-key", true], merchant_id: "0305")
+
+    client.create_bill(sample_ruby_bill)
+
+    expect(JSON.parse(connection.requests.last.body)).to include(
+      "merchantID" => "ruby"
+    )
+  end
+
+  def build_client(client_args, response: success_response, **client_kwargs)
     options = nil
     connection = FakeWebirrFaradayConnection.new(response)
 
@@ -185,7 +212,7 @@ RSpec.describe Webirr::Client do
       connection
     end
 
-    [described_class.new(*client_args), connection, options]
+    [described_class.new(*client_args, **client_kwargs), connection, options]
   end
 
   def success_response
