@@ -32,7 +32,7 @@ The library needs to be configured with a *merchant Id* & *API key*. You can get
 
 ```rb
 require 'webirr/bill'
-require 'webirr/webirr_client'
+require 'webirr/client'
 
 # Create & Update Bill
 def create_bill
@@ -95,7 +95,7 @@ create_bill()
 
 ```rb
 require 'webirr/bill'
-require 'webirr/webirr_client'
+require 'webirr/client'
 
 # Get Payment Status of Bill
 def get_webirr_payment_status
@@ -163,7 +163,7 @@ get_webirr_payment_status()
 
 ```rb
 require 'webirr/bill'
-require 'webirr/webirr_client'
+require 'webirr/client'
 
 // Get Payment Status of Webirr::Bill
 def get_webirr_payment_status

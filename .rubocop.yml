@@ -1,5 +1,25 @@
 AllCops:
   TargetRubyVersion: 2.6
+  NewCops: disable
+  SuggestExtensions: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/OptionalArguments:
+  Exclude:
+    - "lib/webirr/client.rb"
+
+Style/ConditionalAssignment:
+  Exclude:
+    - "lib/webirr/client.rb"
+
+Metrics/MethodLength:
+  Max: 12
+
+Metrics/BlockLength:
+  Exclude:
+    - "spec/webirr_spec.rb"
 
 Style/StringLiterals:
   Enabled: true
