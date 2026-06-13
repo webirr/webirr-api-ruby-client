@@ -39,7 +39,7 @@ def create_bill
     api_key = 'YOUR_API_KEY'
     merchant_id = 'YOUR_MERCHANT_ID'
 
-    # client to use test envionment
+    # client to use test environment
     webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
 
     bill = Webirr::Bill.new
@@ -55,14 +55,14 @@ def create_bill
 
     res = webirr_client.create_bill(bill)
 
-    if (res["error"].blank?)
+    if (res["error"].to_s.empty?)
         # success
         payment_code = res["res"]  # returns paymentcode such as 429 723 975
         puts "\nPayment Code = #{payment_code}" # we may want to save payment code in local db.
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific busines error such as ERROR_INVLAID_INPUT_DUP_REF
+        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT_DUP_REF
     end
 
     #pp res
@@ -76,13 +76,13 @@ def create_bill
 
     res = webirr_client.update_bill(bill)
 
-    if (res["error"].blank?)
+    if (res["error"].to_s.empty?)
         # success
-        puts "\nbill is updated succesfully" #res.res will be 'OK'  no need to check here!
+        puts "\nbill is updated successfully" #res.res will be 'OK'  no need to check here!
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific busines error such as ERROR_INVLAID_INPUT
+        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
     end
 end
 
@@ -102,16 +102,16 @@ def get_webirr_payment_status
     api_key = 'YOUR_API_KEY'
     merchant_id = 'YOUR_MERCHANT_ID'
 
-    # client to use test envionment
+    # client to use test environment
     webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
 
-    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  # suchas as '141 263 782'
+    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  # such as '141 263 782'
 
     puts "\nGetting Payment Status..."
 
     res = webirr_client.get_payment_status(payment_code)
 
-    if (res["error"].blank?) 
+    if (res["error"].to_s.empty?)
         # success
         if (res["res"]["status"] == 2)
           data =  res["res"]["data"]
@@ -126,7 +126,7 @@ def get_webirr_payment_status
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific busines error such as ERROR_INVLAID_INPUT
+        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
     end
 
     #pp res
@@ -165,20 +165,20 @@ get_webirr_payment_status()
 require 'webirr/bill'
 require 'webirr/client'
 
-// Get Payment Status of Webirr::Bill
+# Get Payment Status of Webirr::Bill
 def get_webirr_payment_status
     api_key = 'YOUR_API_KEY'
     merchant_id = 'YOUR_MERCHANT_ID'
 
     webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
 
-    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  // suchas as '141 263 782'
+    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  # such as '141 263 782'
 
     puts "\nGetting Payment Status..."
 
     res = webirr_client.get_payment_status(payment_code)
 
-    if (res["error"].blank?) 
+    if (res["error"].to_s.empty?)
         # success
         if (res["res"]["status"] == 2)
           data =  res["res"]["data"]
@@ -193,10 +193,10 @@ def get_webirr_payment_status
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific busines error such as ERROR_INVLAID_INPUT
+        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
     end
 
-    //pp res
+    #pp res
 end
 get_webirr_payment_status()
 
