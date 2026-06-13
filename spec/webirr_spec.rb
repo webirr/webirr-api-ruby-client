@@ -35,6 +35,30 @@ RSpec.describe Webirr do
     expect(res["error"]).not_to be nil
   end
 
+  it "#get_bill_by_reference should get error from web service on invalid api key" do
+    client = Webirr::Client.new("x", true)
+    res = client.get_bill_by_reference("ruby/2022/001")
+    expect(res["error"]).not_to be nil
+  end
+
+  it "#get_bill_by_payment_code should get error from web service on invalid api key" do
+    client = Webirr::Client.new("x", true)
+    res = client.get_bill_by_payment_code("abcd")
+    expect(res["error"]).not_to be nil
+  end
+
+  it "#get_bills should get error from web service on invalid api key" do
+    client = Webirr::Client.new("x", true)
+    res = client.get_bills(payment_status: -1, last_timestamp: "20251231", limit: 10)
+    expect(res["error"]).not_to be nil
+  end
+
+  it "#get_payments should get error from web service on invalid api key" do
+    client = Webirr::Client.new("x", true)
+    res = client.get_payments(last_timestamp: "20251231", limit: 10)
+    expect(res["error"]).not_to be nil
+  end
+
   it "#get_stat should get error from web service on invalid api key" do
     client = Webirr::Client.new("x", true)
     res = client.get_stat

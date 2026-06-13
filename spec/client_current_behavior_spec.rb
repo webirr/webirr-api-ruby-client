@@ -160,6 +160,58 @@ RSpec.describe Webirr::Client do
     )
   end
 
+  it "gets bill by reference from the current bill retrieval endpoint" do
+    client, connection = build_client(["api-key", true])
+
+    result = client.get_bill_by_reference("ruby/2022/001")
+
+    expect(result).to eq("ok" => true)
+    expect(connection.requests.last).to have_attributes(
+      http_method: :get,
+      path: "einvoice/api/bill?bill_reference=ruby/2022/001",
+      body: nil
+    )
+  end
+
+  it "gets bill by payment code from the current bill retrieval endpoint" do
+    client, connection = build_client(["api-key", true])
+
+    result = client.get_bill_by_payment_code("abcd")
+
+    expect(result).to eq("ok" => true)
+    expect(connection.requests.last).to have_attributes(
+      http_method: :get,
+      path: "einvoice/api/bill?wbc_code=abcd",
+      body: nil
+    )
+  end
+
+  it "gets payments with timestamp cursor from the current bulk polling endpoint" do
+    client, connection = build_client(["api-key", true])
+
+    result = client.get_payments(last_timestamp: "20251231", limit: 10)
+
+    expect(result).to eq("ok" => true)
+    expect(connection.requests.last).to have_attributes(
+      http_method: :get,
+      path: "einvoice/api/payments?last_timestamp=20251231&limit=10",
+      body: nil
+    )
+  end
+
+  it "gets bills with payment status and timestamp cursor from the current list endpoint" do
+    client, connection = build_client(["api-key", true])
+
+    result = client.get_bills(payment_status: -1, last_timestamp: "20251231", limit: 10)
+
+    expect(result).to eq("ok" => true)
+    expect(connection.requests.last).to have_attributes(
+      http_method: :get,
+      path: "einvoice/api/bills?payment_status=-1&last_timestamp=20251231&limit=10",
+      body: nil
+    )
+  end
+
   it "gets merchant stat without dates from the current endpoint" do
     client, connection = build_client(["api-key", true])
 

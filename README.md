@@ -159,69 +159,119 @@ get_webirr_payment_status()
 
 ```
 
-### Getting Payment status of an existing Bill from WeBirr Servers
+### Getting a Bill / Listing Bills from WeBirr Servers
 
 ```rb
 require 'webirr/bill'
 require 'webirr/client'
 
-# Get Payment Status of Webirr::Bill
-def get_webirr_payment_status
+# Get one bill by reference or payment code, and list bills by payment status.
+def get_webirr_bills
     api_key = 'YOUR_API_KEY'
     merchant_id = 'YOUR_MERCHANT_ID'
 
     webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
 
-    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  # such as '141 263 782'
+    bill_reference = "ruby/2022/001"
+    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL' # such as '141 263 782'
 
-    puts "\nGetting Payment Status..."
+    puts "\nGetting Bill By Reference..."
 
-    res = webirr_client.get_payment_status(payment_code)
+    res = webirr_client.get_bill_by_reference(bill_reference)
 
     if (res["error"].to_s.empty?)
         # success
-        if (res["res"]["status"] == 2)
-          data =  res["res"]["data"]
-          puts "\nbill is paid"
-          puts "\nbill payment detail"
-          puts "\nBank: #{data["bankID"]}"
-          puts "\nBank Reference Number: #{data["paymentReference"]}"
-          puts "\nAmount Paid: #{data["amount"]}"
-        else
-          puts "\nbill is pending payment"
-        end
+        puts "\nBill Found"
+        puts res["res"]
     else
         # fail
         puts "\nerror: #{res["error"]}"
         puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
     end
 
+    puts "\nGetting Bill By Payment Code..."
+
+    res = webirr_client.get_bill_by_payment_code(payment_code)
+
+    if (res["error"].to_s.empty?)
+        # success
+        puts "\nBill Found"
+        puts res["res"]
+    else
+        # fail
+        puts "\nerror: #{res["error"]}"
+        puts "\nerrorCode: #{res["errorCode"]}"
+    end
+
+    puts "\nListing Bills..."
+
+    payment_status = -1 # -1 all, 0 pending, 1 unconfirmed payment, 2 paid
+    last_time_stamp = "20251231" # use "20251231235959" when you need time precision
+    limit = 10
+
+    res = webirr_client.get_bills(
+      payment_status: payment_status,
+      last_timestamp: last_time_stamp,
+      limit: limit
+    )
+
+    if (res["error"].to_s.empty?)
+        # success
+        puts "\nBills returned: #{res["res"].length}"
+        puts res["res"]
+    else
+        # fail
+        puts "\nerror: #{res["error"]}"
+        puts "\nerrorCode: #{res["errorCode"]}"
+    end
+
     #pp res
 end
-get_webirr_payment_status()
+get_webirr_bills()
 
 ```
 
-*Sample object returned from getPaymentStatus()*
+### Getting list of Payments from WeBirr Servers
 
-```javascript
-{
-  error: null,
-  res: {
-    status: 2,
-    data: {
-      id: 111112347,
-      paymentReference: '8G3303GHJN',      
-      confirmed: true,
-      confirmedTime: '2021-07-03 10:25:35',
-      bankID: 'cbe_birr',
-      time: '2021-07-03 10:25:33',
-      amount: '4.60',
-      wbcCode: '624 549 955'
-    }
-  },
-  errorCode: null
-}
+```rb
+require 'webirr/client'
+
+# Get list of Payments received after the last processed timestamp.
+def get_webirr_payments
+    api_key = 'YOUR_API_KEY'
+    merchant_id = 'YOUR_MERCHANT_ID'
+
+    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+
+    last_time_stamp = "20251231" # use "20251231235959" when you need time precision
+    limit = 10
+
+    puts "\nRetrieving Payments..."
+
+    res = webirr_client.get_payments(last_timestamp: last_time_stamp, limit: limit)
+
+    if (res["error"].to_s.empty?)
+        # success
+        if (res["res"].length == 0)
+            puts "\nNo new payments found."
+        end
+        res["res"].each do |payment|
+            puts "\n-----------------------------"
+            puts "\nPayment Status: #{payment["status"]}"
+            puts "\nBank: #{payment["bankID"]}"
+            puts "\nBank Reference Number: #{payment["paymentReference"]}"
+            puts "\nAmount Paid: #{payment["amount"]}"
+            puts "\nPayment Date: #{payment["paymentDate"]}"
+            puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
+        end
+    else
+        # fail
+        puts "\nerror: #{res["error"]}"
+        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
+    end
+end
+
+get_webirr_payments()
 
 ```
 
