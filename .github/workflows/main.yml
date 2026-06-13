@@ -3,9 +3,11 @@ name: Ruby
 on:
   push:
     branches:
-      - master
+      - main
 
   pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -17,7 +19,7 @@ jobs:
           - '3.1.2'
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
       with:
