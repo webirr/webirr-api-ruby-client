@@ -275,6 +275,86 @@ get_webirr_payments()
 
 ```
 
+### Webhooks - Payment processing using Webhook Callbacks
+
+```rb
+require 'json'
+
+# Webhook handler for processing payment updates from WeBirr.
+# This endpoint should be hosted on a secure server with HTTPS enabled.
+class Webhook
+    # Handle incoming webhook POST requests.
+    # Validate request method and check authentication using authKey from the query string.
+    def handle_request(method, provided_auth_key, raw_payload)
+        unless method.to_s.upcase == "POST"
+            return json_response(405, "error" => "Method Not Allowed. POST required.")
+        end
+
+        unless authenticated?(provided_auth_key)
+            return json_response(403, "error" => "Unauthorized access. Invalid authKey.")
+        end
+
+        if raw_payload.to_s.empty?
+            return json_response(400, "error" => "Empty request body.")
+        end
+
+        payload = JSON.parse(raw_payload)
+        payment = payload["data"] || payload
+
+        if payment.nil? || payment.empty?
+            return json_response(400, "error" => "Invalid payment data.")
+        end
+
+        # Process the payment asynchronously or enqueue it to a background worker.
+        process_payment(payment)
+
+        # Empty body with 200 OK is also acceptable.
+        json_response(200, "success" => true, "message" => "Payment received and queued for processing")
+    rescue JSON::ParserError
+        json_response(400, "error" => "Invalid JSON format.")
+    end
+
+    private
+
+    def authenticated?(provided_auth_key)
+        # Prefer setting this from your application environment.
+        expected_auth_key = ENV.fetch("WEBIRR_WEBHOOK_AUTH_KEY", "YOUR_WEBHOOK_AUTH_KEY")
+        secure_compare(expected_auth_key.to_s, provided_auth_key.to_s)
+    end
+
+    def secure_compare(expected, provided)
+        return false if expected.empty? || provided.empty?
+        return false unless expected.bytesize == provided.bytesize
+
+        expected_bytes = expected.bytes
+        result = 0
+        provided.each_byte.with_index { |byte, index| result |= byte ^ expected_bytes[index] }
+        result.zero?
+    end
+
+    # Process Payment should be implemented as idempotent operation for production use cases.
+    # This method and logic can be shared among all payment processing consumers:
+    # 1. bulk polling, 2. webhook, 3. single payment polling.
+    def process_payment(payment)
+        puts "\nPayment Status: #{payment["status"]}"
+        puts "\nbill is paid" if payment["status"] == 2
+        puts "\nbill payment is reversed" if payment["status"] == 3
+        puts "\nBank: #{payment["bankID"]}"
+        puts "\nBank Reference Number: #{payment["paymentReference"]}"
+        puts "\nAmount Paid: #{payment["amount"]}"
+        puts "\nPayment Date: #{payment["paymentDate"] || payment["time"]}"
+        puts "\nReversal/Cancel Date: #{payment["canceledTime"]}"
+        puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
+    end
+
+    def json_response(status_code, body)
+        { status_code: status_code, content_type: "application/json", body: body.to_json }
+    end
+end
+
+# Once hosted, the webhook URL needs to be shared with WeBirr for configuration.
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
