@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    webirr (2.0.0)
+    webirr (2.0.1)
       faraday (~> 2.5)
 
 GEM
@@ -51,6 +51,7 @@ GEM
     unicode-display_width (2.2.0)
 
 PLATFORMS
+  universal-darwin-25
   x86_64-linux
 
 DEPENDENCIES

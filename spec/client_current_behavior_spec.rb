@@ -88,11 +88,11 @@ RSpec.describe Webirr::Client do
 
   it "adds client merchant_id as a query parameter when supplied" do
     _client, _connection, options =
-      build_client(["api-key", true], merchant_id: "0305")
+      build_client(["api-key", true], merchant_id: "merchant-from-client")
 
     expect(options[:params]).to eq(
       "api_key" => "api-key",
-      "merchant_id" => "0305"
+      "merchant_id" => "merchant-from-client"
     )
   end
 
@@ -236,6 +236,37 @@ RSpec.describe Webirr::Client do
     )
   end
 
+  it "gets supported banks from the current merchant bank endpoint" do
+    client, connection = build_client(["api-key", true])
+
+    result = client.get_supported_banks
+
+    expect(result).to eq("ok" => true)
+    expect(connection.requests.last).to have_attributes(
+      http_method: :get,
+      path: "einvoice/api/banks",
+      body: nil
+    )
+  end
+
+  it "returns supported bank identifiers and display names" do
+    response = FakeWebirrResponse.new(
+      { "error" => nil, "res" => [{ "bankID" => "cbe_mobile", "name" => "CBE Mobile Banking" }] }.to_json,
+      200,
+      "OK",
+      true
+    )
+    client, _connection = build_client(["api-key", true], response: response)
+
+    result = client.get_supported_banks
+
+    expect(result["error"]).to be_nil
+    expect(result["res"].first).to include(
+      "bankID" => "cbe_mobile",
+      "name" => "CBE Mobile Banking"
+    )
+  end
+
   it "returns the current error hash for failed responses" do
     response = FakeWebirrResponse.new("forbidden", 403, "Forbidden", false)
     client, _connection = build_client(["api-key", true], response: response)
@@ -246,7 +277,7 @@ RSpec.describe Webirr::Client do
   end
 
   it "does not overwrite bill merchant_id from client merchant_id" do
-    client, connection = build_client(["api-key", true], merchant_id: "0305")
+    client, connection = build_client(["api-key", true], merchant_id: "merchant-from-client")
 
     client.create_bill(sample_ruby_bill)
 

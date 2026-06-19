@@ -72,6 +72,13 @@ module Webirr
       decode_response(response)
     end
 
+    # rubocop:disable Naming/AccessorMethodName
+    def get_supported_banks
+      response = @client.get("einvoice/api/banks")
+      decode_response(response)
+    end
+    # rubocop:enable Naming/AccessorMethodName
+
     private
 
     def decode_response(response)

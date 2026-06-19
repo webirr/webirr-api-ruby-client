@@ -231,6 +231,37 @@ get_webirr_bills()
 
 ```
 
+### Getting Supported Banks for Checkout
+
+```rb
+require 'webirr/client'
+
+def get_supported_banks
+    api_key = 'YOUR_API_KEY'
+    merchant_id = 'YOUR_MERCHANT_ID'
+
+    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+
+    puts "\nGetting Supported Banks..."
+
+    res = webirr_client.get_supported_banks
+
+    if (res["error"].to_s.empty?)
+        res["res"].each do |bank|
+            puts "#{bank["bankID"]} - #{bank["name"]}"
+        end
+        puts "Use only these merchant-specific banks when showing checkout payment instructions."
+    else
+        puts "\nerror: #{res["error"]}"
+        puts "\nerrorCode: #{res["errorCode"]}"
+    end
+end
+
+get_supported_banks()
+```
+
+Checkout pages should render bank-specific instructions only from `get_supported_banks`. Do not show a broad static bank list unless those banks are returned for the configured merchant.
+
 ### Getting list of Payments from WeBirr Servers
 
 ```rb

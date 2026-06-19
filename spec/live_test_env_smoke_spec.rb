@@ -13,6 +13,15 @@ RSpec.describe "Live TestEnv smoke tests" do
     client = Webirr::Client.new(test_env_api_key, true, merchant_id: test_env_merchant_id)
     payment_code = nil
 
+    supported_banks = client.get_supported_banks
+    expect_success(supported_banks)
+    expect(supported_banks["res"]).to be_a(Array)
+    expect(supported_banks["res"]).not_to be_empty
+    supported_banks["res"].each do |bank|
+      expect(bank["bankID"].to_s).not_to be_empty
+      expect(bank["name"].to_s).not_to be_empty
+    end
+
     bill = build_live_bill
     create_result = client.create_bill(bill)
     expect_success(create_result)
