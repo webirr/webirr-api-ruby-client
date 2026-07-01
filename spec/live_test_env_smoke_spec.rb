@@ -10,7 +10,7 @@ RSpec.describe "Live TestEnv smoke tests" do
   end
 
   it "creates, updates, retrieves, polls, and deletes a TestEnv bill" do
-    client = Webirr::Client.new(test_env_api_key, true, merchant_id: test_env_merchant_id)
+    client = Webirr::Client.new(test_env_merchant_id, test_env_api_key, true)
     payment_code = nil
 
     supported_banks = client.get_supported_banks
@@ -25,9 +25,11 @@ RSpec.describe "Live TestEnv smoke tests" do
     bill = build_live_bill
     create_result = client.create_bill(bill)
     expect_success(create_result)
+    expect(bill.merchant_id).to eq(test_env_merchant_id)
 
     payment_code = create_result["res"].to_s
     expect(payment_code).not_to be_empty
+    expect(payment_code.gsub(/\s+/, "")).to match(/\A\d{9}\z/)
 
     bill.amount = "121.45"
     bill.customer_name = "John ruby"
@@ -37,14 +39,17 @@ RSpec.describe "Live TestEnv smoke tests" do
     by_reference_result = client.get_bill_by_reference(bill.bill_reference)
     expect_success(by_reference_result)
     expect(by_reference_result["res"]).not_to be_nil
+    expect_live_bill(by_reference_result["res"], bill.bill_reference, payment_code)
 
     by_payment_code_result = client.get_bill_by_payment_code(payment_code)
     expect_success(by_payment_code_result)
     expect(by_payment_code_result["res"]).not_to be_nil
+    expect_live_bill(by_payment_code_result["res"], bill.bill_reference, payment_code)
 
     status_result = client.get_payment_status(payment_code)
     expect_success(status_result)
     expect(status_result["res"]).not_to be_nil
+    expect(status_result["res"]["status"]).to eq(Webirr::PaymentStatus::PENDING)
 
     bills_result = client.get_bills(payment_status: -1, last_timestamp: "20251231", limit: 10)
     expect_success(bills_result)
@@ -53,6 +58,10 @@ RSpec.describe "Live TestEnv smoke tests" do
     payments_result = client.get_payments(last_timestamp: "20251231", limit: 10)
     expect_success(payments_result)
     expect(payments_result["res"]).not_to be_nil
+
+    stat_result = client.get_stat(date_from: "2025-01-01", date_to: "2030-01-31")
+    expect_success(stat_result)
+    expect(stat_result["res"]).not_to be_nil
 
     delete_result = client.delete_bill(payment_code)
     expect_success(delete_result)
@@ -76,7 +85,6 @@ RSpec.describe "Live TestEnv smoke tests" do
       time: Time.now.strftime("%Y-%m-%d %H:%M:%S"),
       description: "Food delivery",
       bill_reference: live_bill_reference,
-      merchant_id: test_env_merchant_id,
       extras: { "source" => "ruby_live_smoke" }
     }
   end
@@ -89,6 +97,16 @@ RSpec.describe "Live TestEnv smoke tests" do
     expect(result).to be_a(Hash)
     expect(result["error"].to_s).to eq("")
   end
+
+  # rubocop:disable Metrics/AbcSize
+  def expect_live_bill(bill, bill_reference, payment_code)
+    expect(bill["billReference"]).to eq(bill_reference)
+    expect(bill["wbcCode"].to_s.gsub(/\s+/, "")).to eq(payment_code.gsub(/\s+/, ""))
+    expect(bill["customerPhone"]).to eq("0911000000")
+    expect(bill["amount"].to_s).to eq("121.45")
+    expect(bill["updateTimeStamp"].to_s).not_to be_empty
+  end
+  # rubocop:enable Metrics/AbcSize
 
   def test_env_configured?
     test_env_merchant_id != "" && test_env_api_key != ""

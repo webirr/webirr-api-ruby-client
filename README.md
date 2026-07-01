@@ -7,49 +7,85 @@ This gem provides convenient access to WeBirr Payment Gateway APIs from Ruby App
 
 ## Installation
 
-Add this line to your application's Gemfile:
+The current Ruby SDK release can be installed directly from GitHub:
 
 ```ruby
-gem 'webirr'
+gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.1.0"
 ```
 
-And then execute:
+Private SSH install is also supported when your environment has GitHub SSH access:
+
+```ruby
+gem "webirr", git: "git@github.com:webirr/webirr-api-ruby-client.git", tag: "v2.1.0"
+```
+
+RubyGems publishing is deferred for now. If you already have access to a published RubyGems version, the classic Gemfile form is:
+
+```ruby
+gem "webirr"
+```
+
+Then execute:
 
     $ bundle install
-
-Or install it yourself as:
-
-    $ gem install webirr
 
 ## Usage
 
 The library needs to be configured with a *merchant Id* & *API key*. You can get it by contacting [webirr.com](https://webirr.com)
 
-> You can use this library for production or test environments. you will need to set is_test_env=true for test, and false for production apps when creating objects of class Webirr::Client
+> You can use this library for production or test environments. You will need to set `is_test_env=true` for test, and false for production apps when creating objects of class `Webirr::Client`.
+
+Examples assume the WeBirr TestEnv and read credentials from environment variables:
+
+```bash
+export WEBIRR_TEST_ENV_MERCHANT_ID="YOUR_TEST_MERCHANT_ID"
+export WEBIRR_TEST_ENV_API_KEY="YOUR_TEST_API_KEY"
+```
+
+Create the client with merchant ID, API key, and environment once:
+
+```rb
+webirr_client = Webirr::Client.new(merchant_id, api_key, true)
+```
+
+The client automatically sets `bill.merchant_id` before sending bill create/update requests, so application code and examples should not set `bill.merchant_id` manually.
+
+By default, TestEnv uses `https://api.webirr.dev` and production uses `https://api.webirr.com:8080`. Ruby keeps support for custom domains:
+
+```rb
+webirr_client = Webirr::Client.new(
+    merchant_id,
+    api_key,
+    true,
+    domain: "custom.gateway.com:9443"
+)
+```
+
+The `domain` value may be a host, host with port, or full URL.
 
 ## Examples
+
 ### Creating a new Bill / Updating an existing Bill on WeBirr Servers
 
 ```rb
-require 'webirr/bill'
-require 'webirr/client'
+require "webirr"
 
 # Create & Update Bill
 def create_bill
-    api_key = 'YOUR_API_KEY'
-    merchant_id = 'YOUR_MERCHANT_ID'
+    api_key = ENV.fetch("WEBIRR_TEST_ENV_API_KEY", "YOUR_API_KEY")
+    merchant_id = ENV.fetch("WEBIRR_TEST_ENV_MERCHANT_ID", "YOUR_MERCHANT_ID")
 
     # client to use test environment
-    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+    webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
     bill = Webirr::Bill.new
     bill.amount = "120.45"
     bill.customer_code = "C001" # it can be email address or phone number if you dont have customer code
     bill.customer_name = "Yohannes Aregay Hailu"
+    bill.customer_phone = "0911000000"
     bill.time = "2022-09-06 14:20:26" # your bill time, always in this format
     bill.description = "Food delivery"
     bill.bill_reference = "ruby/2022/001" # your unique reference number
-    bill.merchant_id = merchant_id
 
     puts "\nCreating Bill..."
 
@@ -65,11 +101,9 @@ def create_bill
         puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT_DUP_REF
     end
 
-    #pp res
-
     # Update existing bill if it is not paid
     bill.amount = "278.00"
-    bill.customer_name = 'John ruby'
+    bill.customer_name = "John ruby"
     #bill.bill_reference = "WE CAN NOT CHANGE THIS"
 
     puts "\nUpdating Bill..."
@@ -78,7 +112,7 @@ def create_bill
 
     if (res["error"].to_s.empty?)
         # success
-        puts "\nbill is updated successfully" #res.res will be 'OK'  no need to check here!
+        puts "\nbill is updated successfully" # res["res"] will be "OK"; no need to check here!
     else
         # fail
         puts "\nerror: #{res["error"]}"
@@ -87,93 +121,22 @@ def create_bill
 end
 
 create_bill()
-
-```
-
-
-### Getting Payment status of an existing Bill from WeBirr Servers
-
-```rb
-require 'webirr/bill'
-require 'webirr/client'
-
-# Get Payment Status of Bill
-def get_webirr_payment_status
-    api_key = 'YOUR_API_KEY'
-    merchant_id = 'YOUR_MERCHANT_ID'
-
-    # client to use test environment
-    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
-
-    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL'  # such as '141 263 782'
-
-    puts "\nGetting Payment Status..."
-
-    res = webirr_client.get_payment_status(payment_code)
-
-    if (res["error"].to_s.empty?)
-        # success
-        if (res["res"]["status"] == 2)
-          data =  res["res"]["data"]
-          puts "\nbill is paid"
-          puts "\nbill payment detail"
-          puts "\nBank: #{data["bankID"]}"
-          puts "\nBank Reference Number: #{data["paymentReference"]}"
-          puts "\nAmount Paid: #{data["amount"]}"
-        else
-          puts "\nbill is pending payment"
-        end
-    else
-        # fail
-        puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
-    end
-
-    #pp res
-end
-
-get_webirr_payment_status()
-
-```
-
-*Sample object returned from get_payment_status()*
-
-```javascript
-{
-  error: null,
-  res: {
-    status: 2,
-    data: {
-      id: 111112347,
-      paymentReference: '8G3303GHJN',      
-      confirmed: true,
-      confirmedTime: '2021-07-03 10:25:35',
-      bankID: 'cbe_birr',
-      time: '2021-07-03 10:25:33',
-      amount: '4.60',
-      wbcCode: '624 549 955'
-    }
-  },
-  errorCode: null
-}
-
 ```
 
 ### Getting a Bill / Listing Bills from WeBirr Servers
 
 ```rb
-require 'webirr/bill'
-require 'webirr/client'
+require "webirr"
 
 # Get one bill by reference or payment code, and list bills by payment status.
 def get_webirr_bills
-    api_key = 'YOUR_API_KEY'
-    merchant_id = 'YOUR_MERCHANT_ID'
+    api_key = ENV.fetch("WEBIRR_TEST_ENV_API_KEY", "YOUR_API_KEY")
+    merchant_id = ENV.fetch("WEBIRR_TEST_ENV_MERCHANT_ID", "YOUR_MERCHANT_ID")
 
-    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+    webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
     bill_reference = "ruby/2022/001"
-    payment_code = 'PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL' # such as '141 263 782'
+    payment_code = "PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL" # such as "141 263 782"
 
     puts "\nGetting Bill By Reference..."
 
@@ -186,7 +149,7 @@ def get_webirr_bills
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
+        puts "\nerrorCode: #{res["errorCode"]}"
     end
 
     puts "\nGetting Bill By Payment Code..."
@@ -205,7 +168,7 @@ def get_webirr_bills
 
     puts "\nListing Bills..."
 
-    payment_status = -1 # -1 all, 0 pending, 1 unconfirmed payment, 2 paid
+    payment_status = -1 # -1 all, 0 pending, 1 unconfirmed payment, 2 paid, 3 reversed
     last_time_stamp = "20251231" # use "20251231235959" when you need time precision
     limit = 10
 
@@ -224,23 +187,25 @@ def get_webirr_bills
         puts "\nerror: #{res["error"]}"
         puts "\nerrorCode: #{res["errorCode"]}"
     end
-
-    #pp res
 end
-get_webirr_bills()
 
+get_webirr_bills()
 ```
+
+Timestamp cursors can be date-only (`yyyyMMdd`) or include time (`yyyyMMddHHmmss`). Use empty string only when you intentionally want all history from the beginning.
 
 ### Getting Supported Banks for Checkout
 
+Use this endpoint to display only the banks and wallets configured for the merchant.
+
 ```rb
-require 'webirr/client'
+require "webirr"
 
 def get_supported_banks
-    api_key = 'YOUR_API_KEY'
-    merchant_id = 'YOUR_MERCHANT_ID'
+    api_key = ENV.fetch("WEBIRR_TEST_ENV_API_KEY", "YOUR_API_KEY")
+    merchant_id = ENV.fetch("WEBIRR_TEST_ENV_MERCHANT_ID", "YOUR_MERCHANT_ID")
 
-    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+    webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
     puts "\nGetting Supported Banks..."
 
@@ -262,54 +227,138 @@ get_supported_banks()
 
 Checkout pages should render bank-specific instructions only from `get_supported_banks`. Do not show a broad static bank list unless those banks are returned for the configured merchant.
 
-### Getting list of Payments from WeBirr Servers
+### Getting Payment status of an existing Bill from WeBirr Servers
 
 ```rb
-require 'webirr/client'
+require "webirr"
 
-# Get list of Payments received after the last processed timestamp.
-def get_webirr_payments
-    api_key = 'YOUR_API_KEY'
-    merchant_id = 'YOUR_MERCHANT_ID'
+# Get Payment Status of Bill
+def get_webirr_payment_status
+    api_key = ENV.fetch("WEBIRR_TEST_ENV_API_KEY", "YOUR_API_KEY")
+    merchant_id = ENV.fetch("WEBIRR_TEST_ENV_MERCHANT_ID", "YOUR_MERCHANT_ID")
 
-    webirr_client = Webirr::Client.new(api_key, true, merchant_id: merchant_id)
+    # client to use test environment
+    webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
-    last_time_stamp = "20251231" # use "20251231235959" when you need time precision
-    limit = 10
+    payment_code = "PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL"  # such as "141 263 782"
 
-    puts "\nRetrieving Payments..."
+    puts "\nGetting Payment Status..."
 
-    res = webirr_client.get_payments(last_timestamp: last_time_stamp, limit: limit)
+    res = webirr_client.get_payment_status(payment_code)
 
     if (res["error"].to_s.empty?)
         # success
-        if (res["res"].length == 0)
-            puts "\nNo new payments found."
-        end
-        res["res"].each do |payment|
-            puts "\n-----------------------------"
-            puts "\nPayment Status: #{payment["status"]}"
-            puts "\nBank: #{payment["bankID"]}"
-            puts "\nBank Reference Number: #{payment["paymentReference"]}"
-            puts "\nAmount Paid: #{payment["amount"]}"
-            puts "\nPayment Date: #{payment["paymentDate"]}"
-            puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
+        if Webirr::PaymentStatus.paid?(res["res"]["status"])
+          data =  res["res"]["data"]
+          puts "\nbill is paid"
+          puts "\nbill payment detail"
+          puts "\nBank: #{data["bankID"]}"
+          puts "\nBank Reference Number: #{data["paymentReference"]}"
+          puts "\nAmount Paid: #{data["amount"]}"
+          puts "\nPayment Date: #{data["paymentDate"] || data["time"]}"
+        else
+          puts "\nbill is pending payment"
         end
     else
         # fail
         puts "\nerror: #{res["error"]}"
-        puts "\nerrorCode: #{res["errorCode"]}" # can be used to handle specific business error such as ERROR_INVALID_INPUT
+        puts "\nerrorCode: #{res["errorCode"]}"
     end
 end
 
-get_webirr_payments()
-
+get_webirr_payment_status()
 ```
+
+*Sample object returned from get_payment_status()*
+
+```javascript
+{
+  error: null,
+  res: {
+    status: 2,
+    data: {
+      status: 2,
+      id: 111112347,
+      paymentReference: "8G3303GHJN",
+      confirmed: true,
+      confirmedTime: "2021-07-03 10:25:35",
+      bankID: "cbe_birr",
+      paymentDate: "2021-07-03 10:25:33",
+      time: "2021-07-03 10:25:33",
+      amount: "4.60",
+      wbcCode: "624 549 955",
+      updateTimeStamp: "2021070310253300000"
+    }
+  },
+  errorCode: null
+}
+```
+
+### Deleting an existing Bill from WeBirr Servers (if it is not paid)
+
+```rb
+res = webirr_client.delete_bill("PAYMENT_CODE_YOU_SAVED_AFTER_CREATING_A_NEW_BILL")
+
+if (res["error"].to_s.empty?)
+    # success
+    puts "\nbill is deleted successfully"
+else
+    # fail
+    puts "\nerror: #{res["error"]}"
+    puts "\nerrorCode: #{res["errorCode"]}"
+end
+```
+
+### Payment status bulk polling
+
+Use timestamp-based polling to synchronize paid or reversed payments in batch jobs.
+
+```rb
+last_time_stamp = "20251231" # use "20251231235959" when you need time precision
+limit = 10
+
+puts "\nRetrieving Payments..."
+
+res = webirr_client.get_payments(last_timestamp: last_time_stamp, limit: limit)
+
+if (res["error"].to_s.empty?)
+    # success
+    next_last_time_stamp = last_time_stamp
+
+    if (res["res"].length == 0)
+        puts "\nNo new payments found."
+    end
+
+    res["res"].each do |payment|
+        puts "\n-----------------------------"
+        puts "\nPayment Status: #{payment["status"]}"
+        puts "\nBank: #{payment["bankID"]}"
+        puts "\nBank Reference Number: #{payment["paymentReference"]}"
+        puts "\nAmount Paid: #{payment["amount"]}"
+        puts "\nPayment Date: #{payment["paymentDate"]}"
+        puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
+
+        if payment["updateTimeStamp"].to_s > next_last_time_stamp
+            next_last_time_stamp = payment["updateTimeStamp"]
+        end
+    end
+
+    # Persist next_last_time_stamp only after the batch is processed successfully.
+    puts "\nNext cursor: #{next_last_time_stamp}"
+else
+    # fail
+    puts "\nerror: #{res["error"]}"
+    puts "\nerrorCode: #{res["errorCode"]}"
+end
+```
+
+Do not use obsolete serial-number polling for new integrations.
 
 ### Webhooks - Payment processing using Webhook Callbacks
 
 ```rb
-require 'json'
+require "json"
+require "webirr"
 
 # Webhook handler for processing payment updates from WeBirr.
 # This endpoint should be hosted on a secure server with HTTPS enabled.
@@ -368,8 +417,8 @@ class Webhook
     # 1. bulk polling, 2. webhook, 3. single payment polling.
     def process_payment(payment)
         puts "\nPayment Status: #{payment["status"]}"
-        puts "\nbill is paid" if payment["status"] == 2
-        puts "\nbill payment is reversed" if payment["status"] == 3
+        puts "\nbill is paid" if Webirr::PaymentStatus.paid?(payment["status"])
+        puts "\nbill payment is reversed" if Webirr::PaymentStatus.reversed?(payment["status"])
         puts "\nBank: #{payment["bankID"]}"
         puts "\nBank Reference Number: #{payment["paymentReference"]}"
         puts "\nAmount Paid: #{payment["amount"]}"
@@ -386,11 +435,68 @@ end
 # Once hosted, the webhook URL needs to be shared with WeBirr for configuration.
 ```
 
+Webhook processing and polling should share the same local completion logic so that repeated callbacks, manual polling, or background reconciliation cannot complete the same merchant order twice.
+
+### Getting basic Statistics
+
+```rb
+res = webirr_client.get_stat(date_from: "2021-01-01", date_to: "2021-12-31")
+
+if (res["error"].to_s.empty?)
+    puts "\nBills: #{res["res"]["NBills"]}"
+    puts "\nPaid: #{res["res"]["NBillsPaid"]}"
+    puts "\nAmount Paid: #{res["res"]["AmountPaid"]}"
+else
+    puts "\nerror: #{res["error"]}"
+    puts "\nerrorCode: #{res["errorCode"]}"
+end
+```
+
+## Runnable Examples
+
+The `examples` directory contains runnable examples for:
+
+- Creating and updating bills
+- Single payment-status polling
+- Deleting a bill
+- Timestamp-based bulk payment polling
+- Merchant statistics
+- Webhook callback handling
+- Getting and listing bills
+- Getting merchant-supported banks
+
+Run an example:
+
+```bash
+ruby examples/example1_create_update_bill.rb
+```
+
+Run tests:
+
+```bash
+bundle exec rspec
+```
+
+Live TestEnv smoke tests run only when these environment variables are set:
+
+```bash
+export WEBIRR_TEST_ENV_MERCHANT_ID="YOUR_TEST_MERCHANT_ID"
+export WEBIRR_TEST_ENV_API_KEY="YOUR_TEST_API_KEY"
+bundle exec rspec
+```
+
+## Payment Status Values
+
+| Value | Constant | Meaning |
+| --- | --- | --- |
+| `0` | `Webirr::PaymentStatus::PENDING` | Pending / not paid |
+| `1` | `Webirr::PaymentStatus::PAID_UNCONFIRMED` | Paid-unconfirmed / in progress |
+| `2` | `Webirr::PaymentStatus::PAID` | Paid |
+| `3` | `Webirr::PaymentStatus::REVERSED` | Reversed / canceled payment record |
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To run live TestEnv smoke tests, set `WEBIRR_TEST_ENV_MERCHANT_ID` and `WEBIRR_TEST_ENV_API_KEY` before running the test task.
 
 To install this gem onto your local machine, run `bundle exec rake install`.
 
@@ -405,3 +511,30 @@ The gem is available as open source under the terms of the [MIT License](https:/
 ## Code of Conduct
 
 Everyone interacting in the Webirr project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/webirr/webirr-api-ruby-client/blob/main/CODE_OF_CONDUCT.md).
+
+## Error handling & retries
+
+WeBirr business errors come back on HTTP 2xx responses in the parsed response hash as `res["error"]` / `res["errorCode"]`, such as invalid API key, duplicate bill reference, or validation errors. Everything else is a platform error from Faraday or the HTTP layer: network/DNS/TLS failures, timeouts, non-2xx HTTP, and invalid response bodies.
+
+Retry only transient platform failures with exponential backoff and jitter: connection errors, timeouts, and HTTP 5xx / 429 / 408. Use `Webirr::TransientErrors.is_transient(error)` to apply that rule. Never retry other 4xx responses.
+
+Create and read operations are safe to retry. `delete_bill` is also safe to retry, but a retry after it already succeeded returns an "invalid payment code" business error; treat that as already deleted.
+
+```rb
+begin
+    res = webirr_client.create_bill(bill)
+rescue StandardError => e
+    if Webirr::TransientErrors.is_transient(e)
+        # retry with backoff + jitter
+    end
+    # handle platform error
+    return
+end
+
+if (res["error"].to_s.empty?)
+    puts "\nPayment Code = #{res["res"]}"
+else
+    puts "\nerror: #{res["error"]}"
+    puts "\nerrorCode: #{res["errorCode"]}"
+end
+```
