@@ -1,28 +1,18 @@
 # Webirr
-[![Gem Version](https://badge.fury.io/rb/webirr.svg)](https://badge.fury.io/rb/webirr)
 
 Official Ruby gem for WeBirr Payment Gateway APIs
 
 This gem provides convenient access to WeBirr Payment Gateway APIs from Ruby Applications.
+
+Current release: `v2.1.1`
 
 ## Installation
 
 The current Ruby SDK release can be installed directly from GitHub:
 
 ```ruby
-gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.1.0"
-```
-
-Private SSH install is also supported when your environment has GitHub SSH access:
-
-```ruby
-gem "webirr", git: "git@github.com:webirr/webirr-api-ruby-client.git", tag: "v2.1.0"
-```
-
-RubyGems publishing is deferred for now. If you already have access to a published RubyGems version, the classic Gemfile form is:
-
-```ruby
-gem "webirr"
+# Use the latest GitHub release tag.
+gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.1.1"
 ```
 
 Then execute:
@@ -50,18 +40,7 @@ webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
 The client automatically sets `bill.merchant_id` before sending bill create/update requests, so application code and examples should not set `bill.merchant_id` manually.
 
-By default, TestEnv uses `https://api.webirr.dev` and production uses `https://api.webirr.com:8080`. Ruby keeps support for custom domains:
-
-```rb
-webirr_client = Webirr::Client.new(
-    merchant_id,
-    api_key,
-    true,
-    domain: "custom.gateway.com:9443"
-)
-```
-
-The `domain` value may be a host, host with port, or full URL.
+By default, TestEnv uses `https://api.webirr.dev` and production uses `https://api.webirr.com:8080`.
 
 ## Examples
 
@@ -493,24 +472,6 @@ bundle exec rspec
 | `1` | `Webirr::PaymentStatus::PAID_UNCONFIRMED` | Paid-unconfirmed / in progress |
 | `2` | `Webirr::PaymentStatus::PAID` | Paid |
 | `3` | `Webirr::PaymentStatus::REVERSED` | Reversed / canceled payment record |
-
-## Development
-
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
-
-To install this gem onto your local machine, run `bundle exec rake install`.
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/webirr/webirr-api-ruby-client. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/webirr/webirr-api-ruby-client/blob/main/CODE_OF_CONDUCT.md).
-
-## License
-
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
-
-## Code of Conduct
-
-Everyone interacting in the Webirr project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/webirr/webirr-api-ruby-client/blob/main/CODE_OF_CONDUCT.md).
 
 ## Error handling & retries
 

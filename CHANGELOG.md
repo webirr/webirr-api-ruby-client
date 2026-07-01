@@ -1,3 +1,7 @@
+## [2.1.1] - 2026-07-01
+
+- Clean up the public README installation and usage guidance.
+
 ## [2.1.0] - 2026-07-01
 
 - Require merchant ID in the client constructor and set bill merchant ID from the client.

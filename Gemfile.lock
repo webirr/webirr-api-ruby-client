@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    webirr (2.1.0)
+    webirr (2.1.1)
       faraday (~> 2.5)
 
 GEM
