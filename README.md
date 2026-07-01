@@ -416,6 +416,15 @@ end
 
 Webhook processing and polling should share the same local completion logic so that repeated callbacks, manual polling, or background reconciliation cannot complete the same merchant order twice.
 
+## Payment Status Values
+
+| Value | Constant | Meaning |
+| --- | --- | --- |
+| `0` | `Webirr::PaymentStatus::PENDING` | Pending / not paid |
+| `1` | `Webirr::PaymentStatus::PAID_UNCONFIRMED` | Paid-unconfirmed / in progress |
+| `2` | `Webirr::PaymentStatus::PAID` | Paid |
+| `3` | `Webirr::PaymentStatus::REVERSED` | Reversed / canceled payment record |
+
 ### Getting basic Statistics
 
 ```rb
@@ -463,15 +472,6 @@ export WEBIRR_TEST_ENV_MERCHANT_ID="YOUR_TEST_MERCHANT_ID"
 export WEBIRR_TEST_ENV_API_KEY="YOUR_TEST_API_KEY"
 bundle exec rspec
 ```
-
-## Payment Status Values
-
-| Value | Constant | Meaning |
-| --- | --- | --- |
-| `0` | `Webirr::PaymentStatus::PENDING` | Pending / not paid |
-| `1` | `Webirr::PaymentStatus::PAID_UNCONFIRMED` | Paid-unconfirmed / in progress |
-| `2` | `Webirr::PaymentStatus::PAID` | Paid |
-| `3` | `Webirr::PaymentStatus::REVERSED` | Reversed / canceled payment record |
 
 ## Error handling & retries
 
