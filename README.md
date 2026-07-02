@@ -4,7 +4,7 @@ Official Ruby gem for WeBirr Payment Gateway APIs
 
 This gem provides convenient access to WeBirr Payment Gateway APIs from Ruby Applications.
 
-Current release: `v2.1.1`
+Current release: `v2.2.0`
 
 ## Installation
 
@@ -12,7 +12,7 @@ The current Ruby SDK release can be installed directly from GitHub:
 
 ```ruby
 # Use the latest GitHub release tag.
-gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.1.1"
+gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.2.0"
 ```
 
 Then execute:
@@ -234,7 +234,7 @@ def get_webirr_payment_status
           puts "\nBank: #{data["bankID"]}"
           puts "\nBank Reference Number: #{data["paymentReference"]}"
           puts "\nAmount Paid: #{data["amount"]}"
-          puts "\nPayment Date: #{data["paymentDate"] || data["time"]}"
+          puts "\nPayment Date: #{data["paymentDate"]}"
         else
           puts "\nbill is pending payment"
         end
@@ -263,7 +263,6 @@ get_webirr_payment_status()
       confirmedTime: "2021-07-03 10:25:35",
       bankID: "cbe_birr",
       paymentDate: "2021-07-03 10:25:33",
-      time: "2021-07-03 10:25:33",
       amount: "4.60",
       wbcCode: "624 549 955",
       updateTimeStamp: "2021070310253300000"
@@ -401,7 +400,7 @@ class Webhook
         puts "\nBank: #{payment["bankID"]}"
         puts "\nBank Reference Number: #{payment["paymentReference"]}"
         puts "\nAmount Paid: #{payment["amount"]}"
-        puts "\nPayment Date: #{payment["paymentDate"] || payment["time"]}"
+        puts "\nPayment Date: #{payment["paymentDate"]}"
         puts "\nReversal/Cancel Date: #{payment["canceledTime"]}"
         puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
     end

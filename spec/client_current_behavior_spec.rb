@@ -200,6 +200,35 @@ RSpec.describe Webirr::Client do
     )
   end
 
+  it "maps bulk polling rows to payment records without legacy time" do
+    response =
+      FakeWebirrResponse.new(
+        {
+          "error" => nil,
+          "res" => [
+            {
+              "status" => 2,
+              "paymentDate" => "2026-06-25 12:00:00",
+              "time" => "legacy value ignored",
+              "updateTimeStamp" => "2026062512000000000"
+            }
+          ]
+        }.to_json,
+        200,
+        "OK",
+        true
+      )
+    client, = build_client(["merchant-from-client", "api-key", true], response: response)
+
+    result = client.get_payments(last_timestamp: "20251231", limit: 10)
+    payment = result["res"].first
+
+    expect(payment).to be_a(Webirr::PaymentRecord)
+    expect(payment["paymentDate"]).to eq("2026-06-25 12:00:00")
+    expect(payment["updateTimeStamp"]).to eq("2026062512000000000")
+    expect(payment["time"]).to be_nil
+  end
+
   it "gets bills with payment status and timestamp cursor from the current list endpoint" do
     client, connection = build_client(["merchant-from-client", "api-key", true])
 
@@ -291,13 +320,14 @@ RSpec.describe Webirr::Client do
 
     expect(payload).to be_valid
     expect(payload.status).to eq(2)
-    expect(payload.data).to include(
-      "status" => 2,
-      "bankID" => "cbe_mobile",
-      "paymentReference" => "FTC356A577695",
-      "wbcCode" => "000 000 000",
-      "updateTimeStamp" => "2026062512000000000"
-    )
+    expect(payload.data).to be_a(Webirr::PaymentRecord)
+    expect(payload.data["status"]).to eq(2)
+    expect(payload.data["bankID"]).to eq("cbe_mobile")
+    expect(payload.data["paymentReference"]).to eq("FTC356A577695")
+    expect(payload.data["wbcCode"]).to eq("000 000 000")
+    expect(payload.data["updateTimeStamp"]).to eq("2026062512000000000")
+    expect(payload.data["paymentDate"]).to eq("2026-06-25 12:00:00")
+    expect(payload.data["time"]).to be_nil
   end
 
   it "returns the current error hash for failed responses" do

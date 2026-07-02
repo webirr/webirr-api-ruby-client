@@ -20,7 +20,7 @@ if res["error"].to_s.empty?
     puts "\nBank: #{data["bankID"]}"
     puts "\nBank Reference Number: #{data["paymentReference"]}"
     puts "\nAmount Paid: #{data["amount"]}"
-    puts "\nPayment Date: #{data["paymentDate"] || data["time"]}"
+    puts "\nPayment Date: #{data["paymentDate"]}"
   else
     puts "\nbill is pending payment"
   end

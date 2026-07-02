@@ -1,3 +1,12 @@
 module Webirr
   VERSION: String
+
+  class PaymentRecord
+    def initialize: (?Hash[untyped, untyped] data) -> void
+    def []: (untyped key) -> untyped
+    def to_h: () -> Hash[String, untyped]
+    def empty?: () -> bool
+    def paid?: () -> bool
+    def reversed?: () -> bool
+  end
 end

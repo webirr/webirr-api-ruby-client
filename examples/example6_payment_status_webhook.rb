@@ -57,7 +57,7 @@ class Webhook
     puts "\nBank: #{payment["bankID"]}"
     puts "\nBank Reference Number: #{payment["paymentReference"]}"
     puts "\nAmount Paid: #{payment["amount"]}"
-    puts "\nPayment Date: #{payment["paymentDate"] || payment["time"]}"
+    puts "\nPayment Date: #{payment["paymentDate"]}"
     puts "\nReversal/Cancel Date: #{payment["canceledTime"]}"
     puts "\nUpdate Timestamp: #{payment["updateTimeStamp"]}"
   end

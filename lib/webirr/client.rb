@@ -49,7 +49,11 @@ module Webirr
 
     def get_payments(last_timestamp: "", limit: 100)
       path = path_with_query("einvoice/api/payments", last_timestamp: last_timestamp, limit: limit)
-      decode_response(@client.get(path))
+      response = decode_response(@client.get(path))
+      if response["res"].is_a?(Array)
+        response["res"] = response["res"].map { |payment| PaymentRecord.new(payment) }
+      end
+      response
     end
 
     def get_bills(payment_status: -1, last_timestamp: "", limit: 100)

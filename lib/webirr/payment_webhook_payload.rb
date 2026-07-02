@@ -7,11 +7,11 @@ module Webirr
     def initialize(payload)
       @payload = payload || {}
       @status = @payload["status"] || @payload[:status]
-      @data = @payload["data"] || @payload[:data]
+      @data = PaymentRecord.new(@payload["data"] || @payload[:data])
     end
 
     def valid?
-      data.is_a?(Hash) && !data.empty?
+      data.is_a?(PaymentRecord) && !data.empty?
     end
   end
 end
