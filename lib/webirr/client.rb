@@ -6,7 +6,7 @@ require "uri"
 module Webirr
   class Client
     DEFAULT_TEST_BASE_URL = "https://api.webirr.dev"
-    DEFAULT_PROD_BASE_URL = "https://api.webirr.com:8080"
+    DEFAULT_PROD_BASE_URL = "https://api.webirr.net:8080"
 
     def initialize(merchant_id, api_key, is_test_env, domain: nil)
       @api_key = api_key.to_s
@@ -23,20 +23,20 @@ module Webirr
 
     def create_bill(bill)
       prepare_bill(bill)
-      decode_response(@client.post("einvoice/api/postbill") { |req| req.body = bill.to_json })
+      decode_response(@client.post("einvoice/api/bill") { |req| req.body = bill.to_json })
     end
 
     def update_bill(bill)
       prepare_bill(bill)
-      decode_response(@client.put("einvoice/api/postbill") { |req| req.body = bill.to_json })
+      decode_response(@client.put("einvoice/api/bill") { |req| req.body = bill.to_json })
     end
 
     def delete_bill(payment_code)
-      decode_response(@client.put(path_with_query("einvoice/api/deletebill", wbc_code: payment_code)))
+      decode_response(@client.delete(path_with_query("einvoice/api/bill", wbc_code: payment_code)))
     end
 
     def get_payment_status(payment_code)
-      decode_response(@client.get(path_with_query("einvoice/api/getPaymentStatus", wbc_code: payment_code)))
+      decode_response(@client.get(path_with_query("einvoice/api/paymentStatus", wbc_code: payment_code)))
     end
 
     def get_bill_by_reference(bill_reference)

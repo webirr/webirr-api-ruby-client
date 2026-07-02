@@ -33,6 +33,11 @@ class FakeWebirrFaradayConnection
     @response
   end
 
+  def delete(path)
+    @requests << FakeWebirrCapturedRequest.new(:delete, path, nil)
+    @response
+  end
+
   def get(path)
     @requests << FakeWebirrCapturedRequest.new(:get, path, nil)
     @response
@@ -77,7 +82,7 @@ RSpec.describe Webirr::Client do
   it "configures the default production client" do
     _client, _connection, options = build_client(["merchant-from-client", "api-key", false])
 
-    expect(options[:url]).to eq("https://api.webirr.com:8080")
+    expect(options[:url]).to eq("https://api.webirr.net:8080")
   end
 
   it "keeps support for caller supplied domains" do
@@ -98,14 +103,14 @@ RSpec.describe Webirr::Client do
     expect { described_class.new("  ", "api-key", true) }.to raise_error(ArgumentError, "merchant_id is required")
   end
 
-  it "posts create_bill to the current legacy endpoint" do
+  it "posts create_bill to the current bill endpoint" do
     client, connection = build_client(["merchant-from-client", "api-key", true])
 
     result = client.create_bill(sample_ruby_bill)
 
     expect(result).to eq("ok" => true)
     expect(connection.requests.last.http_method).to eq(:post)
-    expect(connection.requests.last.path).to eq("einvoice/api/postbill")
+    expect(connection.requests.last.path).to eq("einvoice/api/bill")
     expect(JSON.parse(connection.requests.last.body)).to include(
       "customerName" => "Yohannes Aregay Hailu",
       "customerPhone" => "0911000000",
@@ -114,14 +119,14 @@ RSpec.describe Webirr::Client do
     )
   end
 
-  it "puts update_bill to the current legacy endpoint" do
+  it "puts update_bill to the current bill endpoint" do
     client, connection = build_client(["merchant-from-client", "api-key", true])
 
     result = client.update_bill(sample_ruby_bill)
 
     expect(result).to eq("ok" => true)
     expect(connection.requests.last.http_method).to eq(:put)
-    expect(connection.requests.last.path).to eq("einvoice/api/postbill")
+    expect(connection.requests.last.path).to eq("einvoice/api/bill")
     expect(JSON.parse(connection.requests.last.body)).to include(
       "customerCode" => "C001",
       "amount" => "120.45",
@@ -130,20 +135,20 @@ RSpec.describe Webirr::Client do
     )
   end
 
-  it "puts delete_bill to the current legacy endpoint with encoded query" do
+  it "deletes delete_bill through the current bill endpoint with encoded query" do
     client, connection = build_client(["merchant-from-client", "api-key", true])
 
     result = client.delete_bill("123 456 789")
 
     expect(result).to eq("ok" => true)
     expect(connection.requests.last).to have_attributes(
-      http_method: :put,
-      path: "einvoice/api/deletebill?wbc_code=123+456+789",
+      http_method: :delete,
+      path: "einvoice/api/bill?wbc_code=123+456+789",
       body: nil
     )
   end
 
-  it "gets payment status from the current legacy endpoint with encoded query" do
+  it "gets payment status from the current endpoint with encoded query" do
     client, connection = build_client(["merchant-from-client", "api-key", true])
 
     result = client.get_payment_status("123 456 789")
@@ -151,7 +156,7 @@ RSpec.describe Webirr::Client do
     expect(result).to eq("ok" => true)
     expect(connection.requests.last).to have_attributes(
       http_method: :get,
-      path: "einvoice/api/getPaymentStatus?wbc_code=123+456+789",
+      path: "einvoice/api/paymentStatus?wbc_code=123+456+789",
       body: nil
     )
   end
@@ -260,6 +265,38 @@ RSpec.describe Webirr::Client do
     expect(result["res"].first).to include(
       "bankID" => "cbe_mobile",
       "name" => "CBE Mobile Banking"
+    )
+  end
+
+  it "parses the gateway webhook payment wrapper" do
+    payload =
+      Webirr::PaymentWebhookPayload.new(
+        "status" => 2,
+        "data" => {
+          "status" => 2,
+          "id" => 121_356,
+          "bankID" => "cbe_mobile",
+          "paymentReference" => "FTC356A577695",
+          "paymentDate" => "2026-06-25 12:00:00",
+          "time" => "2026-06-25 12:00:00",
+          "confirmed" => true,
+          "confirmedTime" => "2026-06-25 12:00:00",
+          "canceled" => false,
+          "canceledTime" => "",
+          "amount" => "100.00",
+          "wbcCode" => "000 000 000",
+          "updateTimeStamp" => "2026062512000000000"
+        }
+      )
+
+    expect(payload).to be_valid
+    expect(payload.status).to eq(2)
+    expect(payload.data).to include(
+      "status" => 2,
+      "bankID" => "cbe_mobile",
+      "paymentReference" => "FTC356A577695",
+      "wbcCode" => "000 000 000",
+      "updateTimeStamp" => "2026062512000000000"
     )
   end
 

@@ -40,7 +40,7 @@ webirr_client = Webirr::Client.new(merchant_id, api_key, true)
 
 The client automatically sets `bill.merchant_id` before sending bill create/update requests, so application code and examples should not set `bill.merchant_id` manually.
 
-By default, TestEnv uses `https://api.webirr.dev` and production uses `https://api.webirr.com:8080`.
+By default, TestEnv uses `https://api.webirr.dev` and production uses `https://api.webirr.net:8080`.
 
 ## Examples
 
@@ -358,14 +358,14 @@ class Webhook
         end
 
         payload = JSON.parse(raw_payload)
-        payment = payload["data"] || payload
+        webhook_payload = Webirr::PaymentWebhookPayload.new(payload)
 
-        if payment.nil? || payment.empty?
+        unless webhook_payload.valid?
             return json_response(400, "error" => "Invalid payment data.")
         end
 
         # Process the payment asynchronously or enqueue it to a background worker.
-        process_payment(payment)
+        process_payment(webhook_payload.data)
 
         # Empty body with 200 OK is also acceptable.
         json_response(200, "success" => true, "message" => "Payment received and queued for processing")

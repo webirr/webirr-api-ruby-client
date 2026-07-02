@@ -31,7 +31,7 @@ if res["error"].to_s.empty?
     next_last_time_stamp = payment["updateTimeStamp"] if payment["updateTimeStamp"].to_s > next_last_time_stamp
   end
 
-  # Persist nextLastTimeStamp only after the batch is processed successfully.
+  # Persist next_last_time_stamp only after the batch is processed successfully.
   puts "\nNext cursor: #{next_last_time_stamp}"
 else
   puts "\nerror: #{res["error"]}"

@@ -19,11 +19,11 @@ class Webhook
     return json_response(400, "error" => "Empty request body.") if raw_payload.to_s.empty?
 
     payload = JSON.parse(raw_payload)
-    payment = payload["data"] || payload
+    webhook_payload = Webirr::PaymentWebhookPayload.new(payload)
 
-    return json_response(400, "error" => "Invalid payment data.") if payment.nil? || payment.empty?
+    return json_response(400, "error" => "Invalid payment data.") unless webhook_payload.valid?
 
-    process_payment(payment)
+    process_payment(webhook_payload.data)
 
     json_response(200, "success" => true, "message" => "Payment received and queued for processing")
   rescue JSON::ParserError
