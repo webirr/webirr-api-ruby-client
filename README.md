@@ -4,20 +4,22 @@ Official Ruby gem for WeBirr Payment Gateway APIs
 
 This gem provides convenient access to WeBirr Payment Gateway APIs from Ruby Applications.
 
-Current release: `v2.2.0`
-
 ## Installation
 
 The current Ruby SDK release can be installed directly from GitHub:
 
 ```ruby
-# Use the latest GitHub release tag.
-gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "v2.2.0"
+# Replace vX.Y.Z with the latest GitHub Release tag.
+gem "webirr", git: "https://github.com/webirr/webirr-api-ruby-client.git", tag: "vX.Y.Z"
 ```
 
 Then execute:
 
     $ bundle install
+
+Use the latest released Ruby tag unless your application needs to pin a specific
+version. WeBirr SDKs version independently by language, so the Ruby SDK version
+may differ from PHP, Go, JavaScript, .NET, Python, Dart, Kotlin, or Swift.
 
 ## Usage
 
